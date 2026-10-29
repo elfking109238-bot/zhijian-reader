@@ -1,0 +1,11 @@
+{
+  "name": "zhijian-reader",
+  "productName": "纸间",
+  "version": "1.0.0",
+  "description": "本地离线电子书阅读器",
+  "author": "纸间",
+  "license": "MIT",
+  "main": "main.cjs",
+  "scripts": {"start": "electron .", "samples":"node scripts/samples.cjs", "test": "node scripts/samples.cjs && node tests/e2e.cjs", "pack": "node scripts/package.cjs", "icon":"node scripts/icon.cjs"},
+  "devDependencies": {"electron": "43.2.0", "@electron/asar": "3.4.1", "resedit":"1.7.2", "@napi-rs/canvas":"0.1.100", "playwright": "1.62.1"}
+}

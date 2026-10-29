@@ -1,0 +1,30 @@
+纸间 1.0.0
+
+Electron 43.2.0 (MIT and Chromium third-party licenses)
+https://github.com/electron/electron
+Runtime LICENSE and LICENSES.chromium.html are included in the portable directory.
+
+Foliate JS (MIT)
+https://github.com/johnfactotum/foliate-js
+Pinned source commit: 78914aef4466eb960965702401634c2cb348e9b1
+Retrieved 2026-10-29 from the official repository.
+Local changes: remove allow-scripts from chapter iframe sandboxes; reject encrypted
+MOBI headers; add HUFF recursion / expansion guards, record and total text bounds,
+and zero TAGX mask protection. Additional safe ZIP loading and chapter sanitation
+are implemented in formats.js outside the vendor code.
+Paginator rendering also guards against layout callbacks arriving before a chapter
+document body exists or after that document has been detached.
+
+zip.js 2.8.22 (BSD-3-Clause)
+https://github.com/gildas-lormeau/zip.js
+Vendored through Foliate JS; license: zip.js-LICENSE.txt.
+
+fflate 0.8.2 (MIT)
+https://github.com/101arrowz/fflate
+Vendored through Foliate JS; license: fflate-LICENSE.txt.
+
+Build tools (not required to run the portable app):
+@electron/asar 3.4.1; resedit 1.7.2; @napi-rs/canvas; Playwright.
+
+Original sample stories: written for this application. Freely usable for reading,
+copying, distribution and testing. No user book library was accessed or uploaded.

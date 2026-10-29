@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>纸间 · 让阅读慢下来</title><link rel="stylesheet" href="styles.css"></head>
+<body>
+<div id="library" class="app-shell">
+ <aside class="sidebar">
+  <div class="brand"><span class="brand-icon">纸</span><span>纸间<small>ZHIJIAN</small></span></div>
+  <button class="import primary" id="importButton"><span>＋</span> 导入书籍</button>
+  <div class="nav-label">我的阅读</div>
+  <nav><button class="nav-item active" data-filter="all"><i data-icon="books"></i>所有书籍<span id="bookCount">0</span></button><button class="nav-item" data-filter="recent"><i data-icon="clock"></i>最近阅读</button><button class="nav-item" data-filter="bookmarked"><i data-icon="bookmark"></i>我的书签</button></nav>
+  <div class="sidebar-bottom"><div class="local-dot"></div><strong>只在你的电脑上</strong><p>离线阅读，让故事留在本地。</p><button id="aboutButton" class="text-button">使用帮助 <span>↗</span></button></div>
+ </aside>
+ <main class="shelf-main">
+  <header class="shelf-header"><span id="greeting">给自己一段阅读时光</span><div class="search"><i data-icon="search"></i><input id="search" placeholder="搜索书名或作者" aria-label="搜索书名或作者"><kbd>Ctrl K</kbd></div></header>
+  <section class="welcome"><div><div class="eyebrow">YOUR PRIVATE LIBRARY</div><h1>把时间，留给一本好书。</h1><p>一页一页，遇见更大的世界。</p></div><div class="welcome-art" aria-hidden="true"><div class="art-circle"></div><div class="art-book a"></div><div class="art-book b"></div><div class="art-spark">✦</div></div></section>
+  <section id="continueSection" hidden><div class="section-title"><h2>继续阅读</h2><span>回到故事发生的地方</span></div><button id="continueCard" class="continue-card"></button></section>
+  <div class="section-title shelf-title"><h2 id="shelfTitle">我的书架</h2><div class="shelf-actions"><span id="resultCount"></span><select id="sort" aria-label="书籍排序"><option value="recent">最近添加</option><option value="title">书名排序</option><option value="read">最近阅读</option></select></div></div>
+  <section id="grid" class="book-grid" aria-label="书架"></section>
+  <div id="empty" class="empty"><i data-icon="books"></i><h2>下一段故事，从这里开始。</h2><p>将书籍拖到窗口，或点击「导入书籍」</p><span>TXT · EPUB · MOBI · AZW3</span><button id="sampleButton" class="text-button">先读三本原创示例 →</button></div>
+  <footer class="shelf-footer">阅读，可以慢一点。<span>本地书库 · 无需登录</span></footer>
+ </main>
+</div>
+<section id="reader" hidden>
+ <header class="reader-toolbar"><div class="toolbar-left"><button id="back" class="icon-button" aria-label="返回书架" title="返回书架 Esc"><i data-icon="back"></i></button><div class="reader-meta"><strong id="readerTitle"></strong><span id="readerAuthor"></span></div></div><div class="toolbar-right"><button id="tocButton" class="icon-button" title="目录" aria-label="目录"><i data-icon="list"></i></button><button id="bookmarkButton" class="icon-button" title="添加书签" aria-label="添加书签"><i data-icon="bookmark"></i></button><button id="bookmarksButton" class="icon-button" title="书签列表" aria-label="书签列表"><i data-icon="bookmarks"></i></button><button id="settingsButton" class="icon-button typography-button" title="阅读设置" aria-label="阅读设置">Aa</button><button id="focusButton" class="icon-button" title="专注模式 F" aria-label="专注模式"><i data-icon="focus"></i></button></div></header>
+ <div class="reading-stage"><button id="prev" class="page-arrow" aria-label="上一页" title="上一页 ←">‹</button><div id="viewHost"></div><button id="next" class="page-arrow" aria-label="下一页" title="下一页 →">›</button></div>
+ <footer class="reading-footer"><span id="chapterLabel">正在打开…</span><input id="progress" type="range" min="0" max="1" step="0.001" value="0" aria-label="阅读进度"><span id="percent">0%</span><span class="key-hint">← → 翻页</span></footer>
+ <aside id="tocPanel" class="reader-panel" hidden><div class="panel-heading"><h3>目录</h3><button class="close-panel icon-button" aria-label="关闭目录">×</button></div><div id="tocList"></div></aside>
+ <aside id="bookmarksPanel" class="reader-panel" hidden><div class="panel-heading"><h3>我的书签</h3><button class="close-panel icon-button" aria-label="关闭书签">×</button></div><div id="bookmarksList"></div></aside>
+ <aside id="settingsPanel" class="settings-panel" hidden><div class="panel-heading"><h3>阅读设置</h3><button class="close-panel icon-button" aria-label="关闭设置">×</button></div><label>页面外观</label><div class="themes"><button data-theme="light" title="浅色">白</button><button data-theme="paper" title="暖纸">纸</button><button data-theme="dark" title="深色">夜</button></div><label>字体</label><div class="segmented"><button data-font="serif">宋体</button><button data-font="sans">黑体</button></div><div class="setting-label"><label for="fontSize">字号</label><span id="sizeValue">21</span></div><input id="fontSize" type="range" min="14" max="36" step="1"><div class="setting-label"><label for="lineHeight">行距</label><span id="lineValue">1.9</span></div><input id="lineHeight" type="range" min="1.3" max="2.6" step="0.1"><label>阅读方式</label><div class="segmented"><button data-flow="paginated">左右翻页</button><button data-flow="scrolled">上下滚动</button></div><p class="settings-note">设置自动保存，下一次打开依然熟悉。</p></aside>
+</section>
+<input type="file" id="fileInput" accept=".txt,.epub,.mobi,.azw3" multiple hidden>
+<div id="dropOverlay" hidden><i data-icon="books"></i><h2>把好故事放进书架</h2><p>松开即可导入 · 原文件完整保留</p></div>
+<div id="busy" hidden><div class="spinner"></div><span id="busyText">正在导入…</span></div>
+<div id="toast" role="status" hidden></div>
+<dialog id="messageDialog"><div class="dialog-mark">纸</div><h2 id="dialogTitle"></h2><div id="dialogBody"></div><div id="dialogActions"></div></dialog>
+<script type="module" src="renderer.js"></script></body></html>
