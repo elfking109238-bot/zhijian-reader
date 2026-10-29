@@ -1,6 +1,6 @@
 # Verification
 
-Windows x64, 2026-10-29. The packaged `纸间.exe` was tested with Electron 43.2.0.
+Windows x64, 2026-10-29. The packaged `纸间.exe` version 1.0.1 was tested with Electron 43.2.0.
 
 The complete suite passed 33 checks, with no unhandled page exceptions:
 
@@ -25,6 +25,26 @@ The complete suite passed 33 checks, with no unhandled page exceptions:
 - Dedicated unsupported-MOBI-variant error.
 - Session-level HTTPS request blocking and application-protocol path rejection.
 - Original imported file bytes remain unchanged.
+
+Version 1.0.1 also passed eight deterministic wheel-gesture tests and 16 additional
+checks on the packaged executable using actual browser mouse-wheel input:
+
+- Wheel down/up turns the next/previous page inside the focused MOBI chapter iframe.
+- Small trackpad deltas accumulate; a continuous inertia burst turns only one page.
+- Separate wheel gestures continue reading, and direction reversal returns a page.
+- Ctrl+wheel and horizontal gestures do not page.
+- Settings and table-of-contents panels do not cause accidental page turns; a long
+  table of contents scrolls normally.
+- Scrolled reading mode keeps native continuous scrolling and does not call pagination.
+- Wheel navigation crosses chapters in both directions and respects book boundaries.
+- EPUB and TXT chapters support the same actual wheel input; switching books resets
+  the gesture state.
+- Shelf scrolling remains normal; executable version is 1.0.1; no unhandled exceptions.
+
+The gesture tests cover pixel/line/page delta units, modifier handling, minimum input
+threshold, cooldown, quiet gaps, long inertia, direction reversal and context resets.
+This totals 57 automated checks. Physical mouse/trackpad models were not separately
+tested; wheel events were sent through Chromium's native input path.
 
 The actual Windows window and native file picker were also inspected. Native picker
 opening and filename entry were verified; the computer-use helper could not reliably

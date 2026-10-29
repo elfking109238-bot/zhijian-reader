@@ -1,11 +1,31 @@
 import './vendor/foliate-js/view.js';
 import {parseBook,metadataText} from './formats.js';
+import {WheelGesture} from './wheel.mjs';
 const $=id=>document.getElementById(id);
 const icons={books:'M3 4h6v16H3z M9 5h5v15H9 M15 5l4-1 4 15-4 1z',clock:'M12 8v5l3 2 M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0',bookmark:'M6 3h12v18l-6-4-6 4z',bookmarks:'M8 7h12v15l-6-4-6 4z M4 18V3h12',search:'M21 21l-5-5 M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0',back:'M15 5l-7 7 7 7',list:'M8 6h13 M8 12h13 M8 18h13 M3 6h.01 M3 12h.01 M3 18h.01',focus:'M3 8V3h5 M16 3h5v5 M21 16v5h-5 M8 21H3v-5',arrow:'M5 12h14 M13 6l6 6-6 6'};
 function icon(name){const el=document.createElementNS('http://www.w3.org/2000/svg','svg');el.setAttribute('viewBox','0 0 24 24');const p=document.createElementNS(el.namespaceURI,'path');p.setAttribute('d',icons[name]||icons.books);el.append(p);return el;}
 document.querySelectorAll('[data-icon]').forEach(el=>el.append(icon(el.dataset.icon)));
 let library=[],settings={},filter='all',view=null,current=null,location=null,loading=false,toastTimer,saveTimer,restoreID;
 let saveChain=Promise.resolve();
+const wheelGesture=new WheelGesture();let wheelBusy=false,wheelEpoch=0;
+function resetWheel(){wheelGesture.reset();wheelBusy=false;wheelEpoch++;}
+function handleReadingWheel(event){
+ if(!view||loading||settings.flow!=='paginated'||$('reader').hidden||$('messageDialog').open)return;
+ if(['tocPanel','bookmarksPanel','settingsPanel'].some(id=>!$(id).hidden))return;
+ const target=event.target?.nodeType===1?event.target:event.target?.parentElement;
+ if(target?.closest('input,select,textarea,button,[contenteditable="true"]'))return;
+ // Book-internal scroll boxes retain their own scrolling behavior.
+ for(let el=target;el&&el!==el.ownerDocument.body;el=el.parentElement){
+  const style=el.ownerDocument.defaultView.getComputedStyle(el);
+  if(/auto|scroll/.test(style.overflowY)&&el.scrollHeight>el.clientHeight+2)return;
+ }
+ const direction=wheelGesture.consume(event);
+ if(direction===null)return;
+ event.preventDefault();
+ if(!direction||wheelBusy)return;
+ const reader=view,epoch=wheelEpoch;wheelBusy=true;
+ Promise.resolve().then(()=>direction>0?reader.next():reader.prev()).catch(e=>toast('翻页失败：'+e.message)).finally(()=>{if(epoch===wheelEpoch)wheelBusy=false;});
+}
 const palettes=['#627b70','#b59d79','#53677d','#9d7970','#7b8767','#8c808f'];
 function toast(s){$('toast').textContent=s;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,3200);}
 function busy(s){$('busyText').textContent=s||'';$('busy').hidden=!s;}
@@ -41,10 +61,10 @@ async function importFiles(files){
  finally{busy(null);loading=false;$('fileInput').value='';}
  if(failures.length)dialog('部分书籍未能导入',`${imported} 本已加入书架${dupes?`，${dupes} 本重复书籍已跳过`:''}。\n\n`+failures.join('\n\n'));else toast(`${imported?`已导入 ${imported} 本书`:''}${imported&&dupes?' · ':''}${dupes?`${dupes} 本书已在书架中`:''}`||'没有选择书籍');
 }
-function closePanels(){for(const id of ['tocPanel','bookmarksPanel','settingsPanel'])$(id).hidden=true;}
+function closePanels(){resetWheel();for(const id of ['tocPanel','bookmarksPanel','settingsPanel'])$(id).hidden=true;}
 function togglePanel(id){const hidden=$(id).hidden;closePanels();$(id).hidden=!hidden;}
 function getCSS(){const style=getComputedStyle(document.body);const bg=style.getPropertyValue('--reader-bg').trim();const fg=style.getPropertyValue('--reader-fg').trim();const font=settings.font==='sans'?'"Microsoft YaHei",sans-serif':'"SimSun","Songti SC",serif';return `html,body { background:${bg}!important;color:${fg}!important;font-family:${font}!important;font-size:${settings.size}px!important; } body {padding:0!important;} p,li,blockquote,dd {line-height:${settings.line}!important;font-family:inherit!important;font-size:1em!important;text-align:justify;letter-spacing:.025em;overflow-wrap:break-word;} p {margin:.6em 0 1em!important;} h1,h2,h3,h4,h5,h6 {font-family:inherit!important;font-weight:normal!important;line-height:1.6!important;color:inherit!important;} h1{font-size:1.6em!important;margin:1.1em 0 1.5em!important;text-align:center;} h2{font-size:1.35em!important} img,svg{max-width:100%!important;max-height:75vh!important;object-fit:contain;} a{color:inherit!important;} pre{white-space:pre-wrap!important;} *{animation:none!important;transition:none!important;}`;}
-function applySettings(persist=true){document.body.dataset.theme=settings.theme;$('fontSize').value=settings.size;$('lineHeight').value=settings.line;$('sizeValue').textContent=settings.size;$('lineValue').textContent=Number(settings.line).toFixed(1);for(const key of ['theme','font','flow'])document.querySelectorAll(`[data-${key}]`).forEach(el=>el.classList.toggle('selected',el.dataset[key]===settings[key]));if(view){view.renderer.setAttribute('flow',settings.flow);view.renderer.setStyles?.(getCSS());}if(persist)window.paper.settings(settings).catch(e=>toast('设置保存失败：'+e.message));}
+function applySettings(persist=true){resetWheel();document.querySelector('.key-hint').textContent=settings.flow==='scrolled'?'上下滚动':'滚轮 / ← → 翻页';document.body.dataset.theme=settings.theme;$('fontSize').value=settings.size;$('lineHeight').value=settings.line;$('sizeValue').textContent=settings.size;$('lineValue').textContent=Number(settings.line).toFixed(1);for(const key of ['theme','font','flow'])document.querySelectorAll(`[data-${key}]`).forEach(el=>el.classList.toggle('selected',el.dataset[key]===settings[key]));if(view){view.renderer.setAttribute('flow',settings.flow);view.renderer.setStyles?.(getCSS());}if(persist)window.paper.settings(settings).catch(e=>toast('设置保存失败：'+e.message));}
 function saveProgress(){if(!current||!location)return Promise.resolve();const b=current,l={cfi:location.cfi,fraction:location.fraction||0,encoding:b.encoding};b.cfi=l.cfi;b.progress=l.fraction;b.lastRead=Date.now();saveChain=saveChain.catch(()=>{}).then(()=>window.paper.progress(b.id,l)).catch(e=>toast('进度保存失败：'+e.message));return saveChain;}
 async function openBook(b,encoding){
  if(loading)return;loading=true;busy('正在打开 · '+b.title);let parsed;
@@ -56,7 +76,7 @@ async function openBook(b,encoding){
   await view.open(parsed);view.renderer.setAttribute('max-column-count','1');view.renderer.setAttribute('max-inline-size','720px');view.renderer.setAttribute('margin','28px');view.renderer.setAttribute('gap','5%');
   view.addEventListener('external-link',e=>{e.preventDefault();toast('离线阅读模式：外部链接未打开');});
   view.addEventListener('relocate',e=>{location=e.detail;$('progress').value=location.fraction||0;$('percent').textContent=Math.round((location.fraction||0)*100)+'%';$('chapterLabel').textContent=location.tocItem?.label||b.title;updateBookmark();document.querySelectorAll('.toc-entry[data-href]').forEach(el=>el.classList.toggle('current',el.dataset.href===location.tocItem?.href));clearTimeout(saveTimer);saveTimer=setTimeout(saveProgress,250);});
-  view.addEventListener('load',e=>{e.detail.doc.addEventListener('keydown',handleKey);});
+  view.addEventListener('load',e=>{e.detail.doc.addEventListener('keydown',handleKey);e.detail.doc.addEventListener('wheel',handleReadingWheel,{capture:true,passive:false});});
   renderTOC(parsed);applySettings(false);await view.init({lastLocation:encoding?null:b.cfi});await saveProgress();renderShelf();
  }catch(e){parsed?.destroy?.();if(view){view.close();view.remove();view=null;}current=null;$('reader').hidden=true;$('library').hidden=false;dialog('暂时无法打开',e.message);}
  finally{loading=false;busy(null);}
@@ -75,9 +95,10 @@ $('progress').oninput=e=>view?.goToFraction(Number(e.target.value));
 for(const key of ['theme','font','flow'])document.querySelectorAll(`[data-${key}]`).forEach(b=>b.onclick=()=>{settings[key]=b.dataset[key];applySettings();});
 $('fontSize').oninput=e=>{settings.size=Number(e.target.value);applySettings();};$('lineHeight').oninput=e=>{settings.line=Number(e.target.value);applySettings();};
 document.addEventListener('keydown',handleKey);window.addEventListener('blur',()=>saveProgress());
+document.querySelector('.reading-stage').addEventListener('wheel',handleReadingWheel,{capture:true,passive:false});
 window.paper.onFlush(()=>saveProgress());
 let dragDepth=0;document.addEventListener('dragenter',e=>{if(e.dataTransfer.types.includes('Files')){e.preventDefault();dragDepth++;$('dropOverlay').hidden=false;}});document.addEventListener('dragover',e=>e.preventDefault());document.addEventListener('dragleave',e=>{e.preventDefault();dragDepth=Math.max(0,dragDepth-1);if(!dragDepth)$('dropOverlay').hidden=true;});document.addEventListener('drop',e=>{e.preventDefault();dragDepth=0;$('dropOverlay').hidden=true;importFiles([...e.dataTransfer.files]);});
-$('aboutButton').onclick=()=>dialog('在纸间，慢慢读',`支持 TXT、EPUB、无 DRM 的 MOBI / AZW3。\n导入：点击按钮，或将文件拖到窗口。\n阅读：← → / PageUp PageDown 翻页，F 专注，Esc 返回。\nTXT 自动识别 UTF-8、UTF-16 BOM、GB18030；乱码时可在书籍菜单手动选择编码。\n设置和书签会自动保存；关闭应用后，再次启动可回到上次阅读位置。\n原文件保留。书籍副本、进度和书签都位于程序旁的「纸间数据」目录。迁移或备份时请连同此目录一起复制。\n\n本应用不联网、不上传书籍，不执行书内脚本。单本上限 100 MB；TXT 上限 20 MB；EPUB 解压总量上限 128 MB、单条目 16 MB。不支持 DRM、KFX 和扫描 PDF。\n原创示例仅用于试读，可自由移出书架。`);
+$('aboutButton').onclick=()=>dialog('在纸间，慢慢读',`支持 TXT、EPUB、无 DRM 的 MOBI / AZW3。\n导入：点击按钮，或将文件拖到窗口。\n阅读：滚轮向下下一页，向上上一页；← → / PageUp PageDown 也可翻页。F 专注，Esc 返回。连续滚动手势只翻一页，停顿后再滚可继续，反向可回翻。\nTXT 自动识别 UTF-8、UTF-16 BOM、GB18030；乱码时可在书籍菜单手动选择编码。\n设置和书签会自动保存；关闭应用后，再次启动可回到上次阅读位置。\n原文件保留。书籍副本、进度和书签都位于程序旁的「纸间数据」目录。迁移或备份时请连同此目录一起复制。\n\n本应用不联网、不上传书籍，不执行书内脚本。单本上限 100 MB；TXT 上限 20 MB；EPUB 解压总量上限 128 MB、单条目 16 MB。不支持 DRM、KFX 和扫描 PDF。\n原创示例仅用于试读，可自由移出书架。`);
 $('sampleButton').onclick=async()=>{const files=[];for(const [n,label] of [['shanhai.epub','山海来信.epub'],['slow.txt','慢读时光.txt'],['stars.mobi','星河手记.mobi']])files.push(new File([await(await fetch('samples/'+n)).blob()],label));await importFiles(files);};
 async function init(){const state=await window.paper.load();library=state.books;settings=state.settings;restoreID=state.lastBook;applySettings(false);renderShelf();if(state.recoveryWarning)dialog('书库索引需要恢复','已保留损坏索引的恢复副本，原书文件未改动。请重新导入书籍。');if(restoreID){const b=library.find(b=>b.id===restoreID);if(b)await openBook(b);}}
 init().catch(e=>dialog('启动遇到了问题',e.message));

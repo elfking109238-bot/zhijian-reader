@@ -1,0 +1,12 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {WheelGesture} from '../wheel.mjs';
+const event=(deltaY,extra={})=>({deltaY,deltaX:0,deltaMode:0,...extra});
+test('mouse wheel down and up choose next and previous pages',()=>{const g=new WheelGesture();assert.equal(g.consume(event(120),0),1);assert.equal(g.consume(event(-120),220),-1);});
+test('small trackpad movements accumulate; long inertia cannot turn extra pages',()=>{const g=new WheelGesture();const turns=[];for(let t=0;t<1800;t+=20){const d=g.consume(event(t<140?8:3),t);if(d)turns.push(d);}assert.deepEqual(turns,[1]);assert.equal(g.consume(event(120),2100),1);});
+test('separate wheel gestures continue reading while fast repeats are throttled',()=>{const g=new WheelGesture();const times=[0,30,80,330,360,410,680];assert.deepEqual(times.map(t=>g.consume(event(120),t)).filter(Boolean),[1,1,1]);});
+test('reversal starts a new gesture without carrying partial distance',()=>{const g=new WheelGesture();assert.equal(g.consume(event(35),0),0);assert.equal(g.consume(event(-20),50),0);assert.equal(g.consume(event(-30),80),-1);assert.equal(g.consume(event(120),120),0);assert.equal(g.consume(event(10),250),1);});
+test('line and page deltas work like mouse wheel pixels',()=>{const g=new WheelGesture();assert.equal(g.consume(event(3,{deltaMode:1}),0),1);assert.equal(g.consume(event(-1,{deltaMode:2}),250),-1);});
+test('Ctrl wheel and pinch zoom never turn or carry a partial gesture',()=>{const g=new WheelGesture();g.consume(event(30),0);assert.equal(g.consume(event(400,{ctrlKey:true}),30),null);assert.equal(g.consume(event(20),60),0);assert.equal(g.consume(event(30),90),1);});
+test('horizontal gestures, zero and malformed values do not page',()=>{const g=new WheelGesture();for(const e of [event(12,{deltaX:120}),event(0),event(Infinity),event(NaN)])assert.equal(g.consume(e,0),null);});
+test('context reset prevents stale inertia from affecting a new book or layout',()=>{const g=new WheelGesture();g.consume(event(35),0);g.reset();assert.equal(g.consume(event(20),20),0);assert.equal(g.consume(event(30),40),1);});

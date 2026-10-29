@@ -1,4 +1,4 @@
-纸间 1.0.0
+纸间 1.0.1
 
 Electron 43.2.0 (MIT and Chromium third-party licenses)
 https://github.com/electron/electron

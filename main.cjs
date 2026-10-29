@@ -40,9 +40,9 @@ app.whenReady().then(async()=>{
    const u=new URL(req.url); const decoded=decodeURIComponent(u.pathname);
    if(u.hostname!=='app'||decoded.includes('\\')||decoded.includes('\0'))return new Response('',{status:403});
    const rel=decoded.replace(/^\//,'');
-   if(!/^(index\.html|styles\.css|renderer\.js|formats\.js|vendor\/foliate-js\/[\w./-]+\.js|samples\/[\w.-]+)$/.test(rel)||rel.split('/').includes('..'))return new Response('',{status:403});
+   if(!/^(index\.html|styles\.css|renderer\.js|formats\.js|wheel\.mjs|vendor\/foliate-js\/[\w./-]+\.js|samples\/[\w.-]+)$/.test(rel)||rel.split('/').includes('..'))return new Response('',{status:403});
    const full=path.resolve(ROOT,rel);if(!full.startsWith(ROOT+path.sep))return new Response('',{status:403});
-   const type=rel.endsWith('.js')?'text/javascript':rel.endsWith('.css')?'text/css':rel.endsWith('.html')?'text/html':'application/octet-stream';
+   const type=/\.m?js$/.test(rel)?'text/javascript':rel.endsWith('.css')?'text/css':rel.endsWith('.html')?'text/html':'application/octet-stream';
    return new Response(await fs.readFile(full),{headers:{'Content-Type':type,'Content-Security-Policy':"default-src 'self' blob: data:; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self' blob: data:; frame-src blob:; connect-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'",'X-Content-Type-Options':'nosniff'}});
   }catch{return new Response('',{status:404});}
  });

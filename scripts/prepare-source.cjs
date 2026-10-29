@@ -1,9 +1,9 @@
 const fs=require('node:fs/promises'),path=require('node:path');
 const root=path.resolve(__dirname,'..');
 (async()=>{const out=path.join(root,'opensource','zhijian-reader');await fs.mkdir(out,{recursive:true});
-for(const f of ['.gitignore','package.json','package-lock.json','main.cjs','preload.cjs','index.html','styles.css','renderer.js','formats.js','LICENSE','README.md','README.txt'])await fs.copyFile(path.join(root,f),path.join(out,f));
+for(const f of ['.gitignore','package.json','package-lock.json','main.cjs','preload.cjs','index.html','styles.css','renderer.js','formats.js','wheel.mjs','LICENSE','README.md','README.txt','CHANGELOG.md'])await fs.copyFile(path.join(root,f),path.join(out,f));
 for(const d of ['assets','samples','third-party','docs','scripts'])await fs.cp(path.join(root,d),path.join(out,d),{recursive:true});
-await fs.mkdir(path.join(out,'tests'),{recursive:true});for(const f of ['e2e.cjs','screenshots.cjs'])await fs.copyFile(path.join(root,'tests',f),path.join(out,'tests',f));
+await fs.mkdir(path.join(out,'tests'),{recursive:true});for(const f of ['e2e.cjs','screenshots.cjs','wheel.test.mjs','wheel-e2e.cjs'])await fs.copyFile(path.join(root,'tests',f),path.join(out,'tests',f));
 const v=path.join(out,'vendor','foliate-js');await fs.mkdir(path.join(v,'vendor'),{recursive:true});for(const f of await fs.readdir(path.join(root,'vendor','foliate-js')))if(f.endsWith('.js')||f==='LICENSE')await fs.copyFile(path.join(root,'vendor','foliate-js',f),path.join(v,f));for(const f of ['zip.js','fflate.js'])await fs.copyFile(path.join(root,'vendor','foliate-js','vendor',f),path.join(v,'vendor',f));
 let files=0,bytes=0;const findings=[];const patterns=[['personal-path',/(?:[A-Z]:[\\/]Users[\\/]|@(?:gmail|yahoo|outlook)\.com)/i],['credential',/(?:ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9]{20,}|-----BEGIN (?:RSA |OPENSSH )?PRIVATE KEY-----)/]];
 for(const term of (process.env.AUDIT_PRIVATE_TERMS||'').split('|').filter(Boolean))patterns.push(['private-term',new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i')]);
